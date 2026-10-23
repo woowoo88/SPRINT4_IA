@@ -8,11 +8,11 @@ Abra um notebook novo no Google Colab e execute as células abaixo.
 
 ```python
 %cd /content
-!rm -rf SPRINT3_IA
+!rm -rf SPRINT4_IA
 %pip uninstall -y chargegrid-intelligence
 
-!git clone https://github.com/woowoo88/SPRINT3_IA.git
-%cd SPRINT3_IA
+!git clone https://github.com/woowoo88/SPRINT4_IA.git
+%cd SPRINT4_IA
 
 %pip install -q -r requirements.txt
 ```

@@ -12,7 +12,7 @@ python -m sprint04.avaliar_economico --modelo gemini-3.5-flash-lite --saida resu
 
 As duas versões e o juiz usam o mesmo modelo em chamadas separadas. Esse modo utiliza até 21 chamadas por bateria antes de retentativas: 20 turnos de conversa e uma avaliação em lote. Regras locais podem reduzir esse total. O limitador permite oito chamadas por minuto, mas a execução também depende da quota diária do projeto.
 
-No [notebook do Colab](https://colab.research.google.com/github/woowoo88/SPRINT3_IA/blob/main/Executar_Sprint04.ipynb), execute as células em ordem. A chave é lida por Colab Secrets ou entrada oculta. Os modelos são definidos antes da avaliação e registrados nos resultados.
+No [notebook do Colab](https://colab.research.google.com/github/woowoo88/SPRINT4_IA/blob/main/Executar_Sprint04.ipynb), execute as células em ordem. A chave é lida por Colab Secrets ou entrada oculta. Os modelos são definidos antes da avaliação e registrados nos resultados.
 
 Localmente, com Python 3.10 ou superior e chave configurada em `GOOGLE_API_KEY` ou `.env`:
 

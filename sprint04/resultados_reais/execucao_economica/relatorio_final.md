@@ -79,7 +79,7 @@ Olavo Dadario Vianna Barreto - RM 569272: Pensamento Computacional e Automação
 
 John Cutile Titirico - RM 571976: Modelagem Linear para Aprendizado de Máquina.
 
-Código, dataset e registros da avaliação: https://github.com/woowoo88/SPRINT3_IA.
+Código, dataset e registros da avaliação: https://github.com/woowoo88/SPRINT4_IA.
 
 ## Configuração registrada
 ```json

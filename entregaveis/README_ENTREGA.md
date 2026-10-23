@@ -4,7 +4,7 @@ Documentação da Sprint 03, mantida como registro da evolução do projeto. A a
 
 ## Repositório
 
-https://github.com/woowoo88/SPRINT3_IA
+https://github.com/woowoo88/SPRINT4_IA
 
 ## Projeto
 

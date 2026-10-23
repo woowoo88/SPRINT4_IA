@@ -25,7 +25,7 @@ Houve empate na nota final. A latência inclui espera entre chamadas e tentativa
 
 ## Executar no Google Colab
 
-[Abrir o notebook da Sprint 04](https://colab.research.google.com/github/woowoo88/SPRINT3_IA/blob/main/Executar_Sprint04.ipynb)
+[Abrir o notebook da Sprint 04](https://colab.research.google.com/github/woowoo88/SPRINT4_IA/blob/main/Executar_Sprint04.ipynb)
 
 Execute as células na ordem. O notebook clona o repositório, instala as dependências e lê a chave por Colab Secrets ou entrada oculta. O modo econômico avalia oito cenários por versão; o modo completo usa os 16 cenários. Ao final, o notebook oferece o download dos resultados e do relatório.
 

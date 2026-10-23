@@ -84,7 +84,7 @@ def gerar(resultado=None, destino=Path('resultados')):
             'Paulo Henrique Lira Bilac de Araújo - RM 569496: Computer Organization and Architecture / Computer Science.',
             'Olavo Dadario Vianna Barreto - RM 569272: Pensamento Computacional e Automação com Python / Soluções em Energias Renováveis e Sustentáveis.',
             'John Cutile Titirico - RM 571976: Modelagem Linear para Aprendizado de Máquina.',
-            'Código, dataset e registros da avaliação: https://github.com/woowoo88/SPRINT3_IA.'
+            'Código, dataset e registros da avaliação: https://github.com/woowoo88/SPRINT4_IA.'
         ])
     ]
     if resultado:
