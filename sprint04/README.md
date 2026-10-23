@@ -1,6 +1,6 @@
 # Sprint 04 - Pipeline de avaliação ChargeGrid
 
-Esta sprint acrescenta avaliação sistemática ao código existente. O agente conversacional permanece no pacote `chargegrid_intelligence`; o pipeline fica em `sprint04`.
+O pipeline mede o desempenho do ChargeGrid Intelligence e compara a versão atual com uma variação sem o guardião de escopo. O código de avaliação está em `sprint04`; a aplicação continua em `chargegrid_intelligence`.
 
 ## Execução
 
@@ -10,16 +10,16 @@ Para contas com quota reduzida, o modo econômico usa oito cenários e um juiz e
 python -m sprint04.avaliar_economico --modelo gemini-3.5-flash-lite --saida resultados/economico
 ```
 
-O mesmo modelo é utilizado em ambas as versões e em uma chamada separada de avaliação. Esse modo usa até 18 chamadas ao modelo por bateria. Ele não contorna limites diários: se a quota do projeto acabar, é preciso aguardar a renovação ou ajustar o plano no provedor. O controle de ritmo do modo completo limita as chamadas a oito por minuto por padrão.
+As duas versões e o juiz usam o mesmo modelo em chamadas separadas. Esse modo utiliza até 21 chamadas por bateria antes de retentativas: 20 turnos de conversa e uma avaliação em lote. Regras locais podem reduzir esse total. O limitador permite oito chamadas por minuto, mas a execução também depende da quota diária do projeto.
 
-Abra o notebook [Executar_Sprint04.ipynb no Colab](https://colab.research.google.com/github/woowoo88/SPRINT3_IA/blob/main/Executar_Sprint04.ipynb) e execute as células em ordem. A chave é lida por Colab Secrets ou entrada oculta. Informe IDs de modelo disponíveis em sua conta; nenhum modelo é substituído silenciosamente.
+No [notebook do Colab](https://colab.research.google.com/github/woowoo88/SPRINT3_IA/blob/main/Executar_Sprint04.ipynb), execute as células em ordem. A chave é lida por Colab Secrets ou entrada oculta. Os modelos são definidos antes da avaliação e registrados nos resultados.
 
 Localmente, com Python 3.10 ou superior e chave configurada em `GOOGLE_API_KEY` ou `.env`:
 
 ```bash
 pip install -r requirements-sprint04.txt
 python -m sprint04.avaliar --modelo SEU_MODELO --juiz MODELO_JUIZ --repeticoes 1
-python -m unittest sprint04.test_pipeline -v
+python -m unittest sprint04.test_pipeline sprint04.test_economico sprint04.test_retomada -v
 ```
 
 Para reduzir o efeito de variações nas respostas, considere três repetições. Cada repetição envolve 32 avaliações, até 42 chamadas de conversa e até 32 chamadas ao juiz. As chamadas podem consumir quota ou créditos do provedor.
@@ -28,7 +28,7 @@ Para reduzir o efeito de variações nas respostas, considere três repetições
 
 O `golden_dataset.json` contém 16 cenários: cinco funcionais, dois de memória em três turnos, dois de escopo, cinco de segurança e dois de borda. Cada caso possui gabarito semântico e expectativa de recusa. O gabarito é enviado apenas ao juiz.
 
-São comparadas duas variações da mesma aplicação: `sprint03_atual` e `variacao_sem_guardiao`. A segunda desativa o guardião apenas no adaptador de avaliação; modelo, prompt e memória permanecem iguais. Não se trata de uma execução histórica da Sprint 02. Cada cenário tem uma sessão isolada, preservando a sequência de turnos interna.
+São comparadas duas variações da Sprint 03: `sprint03_atual` e `variacao_sem_guardiao`. A segunda desativa o guardião no adaptador de teste. Modelo, prompt e memória são mantidos. Cada cenário usa uma sessão independente e preserva o histórico entre seus turnos.
 
 ## Métricas e resultados
 
@@ -36,11 +36,11 @@ O juiz recebe diálogo completo, contexto e gabarito, sem conhecer o nome da ver
 
 Falhas contam como zero no agregado e reduzem a cobertura. Não há vencedor enquanto as duas versões não concluírem todas as avaliações. O pipeline exporta `respostas.jsonl`, `resumo.json`, `notas.csv`, `relatorio_final.md` e `relatorio_final.pdf` em `resultados/<data-hora>/`. Tokens de saída são estimados; não representam consumo faturável.
 
-## Evidências e pendências
+## Resultados registrados
 
-Os oito testes de infraestrutura foram aprovados. Os dublês são exclusivos dos testes e não fornecem notas reais do agente. A avaliação real está concluída em `resultados_reais/execucao_economica/`: oito cenários por versão, Gemini 3.5 Flash-Lite, cobertura final de 100% e empate no score (1,000). Consulte o PDF, os diálogos e as justificativas; o relatório registra a instabilidade do juiz e as retentativas técnicas. O documento em `relatorio_metodologico/` é uma versão histórica anterior à execução.
+Os resultados estão em `resultados_reais/execucao_economica/`. Foram avaliados oito cenários por versão com Gemini 3.5 Flash-Lite. Após a retomada de três falhas técnicas, a cobertura chegou a 100% e a nota final foi 1,000 nas duas versões. O relatório analisa o empate e as mudanças de parecer do juiz.
 
-`avaliacao_manual_sprint03.md` preserva o registro qualitativo anterior para confronto, sem tratá-lo como comprovação quantitativa. `proveniencia.json` identifica a base. O relatório final inclui John Cutile Titirico (RM 571976) e a divisão por matérias confirmada pelo grupo. A turma foi informada como Ciência da Computação, 1º ano. A chave não integra o código ou os arquivos de entrega.
+Oito testes automatizados verificam o funcionamento do pipeline sem consumir a API. Os resultados desses testes estão descritos em `VALIDACAO_LOCAL.md`. O arquivo `avaliacao_manual_sprint03.md` contém a avaliação qualitativa anterior, e `proveniencia.json` registra a versão do projeto usada como base.
 
 Para retomar apenas turnos com falha técnica, com a chave configurada no ambiente:
 

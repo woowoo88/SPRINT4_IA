@@ -1,5 +1,7 @@
 # Entrega Sprint 03 - ChargeGrid Intelligence
 
+Documentação da Sprint 03, mantida como registro da evolução do projeto. A avaliação e o relatório final da Sprint 04 estão em `sprint04/resultados_reais/execucao_economica/`.
+
 ## Repositório
 
 https://github.com/woowoo88/SPRINT3_IA

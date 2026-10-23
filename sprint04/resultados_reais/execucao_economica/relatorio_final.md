@@ -1,80 +1,69 @@
 # Relatório final - ChargeGrid Intelligence - Sprint 04
 
-
-Estado: COMPLETO
-
-
 ## 1. Objetivo e golden dataset
 
-Esta entrega avalia o ChargeGrid Intelligence mantendo o núcleo da Sprint 03. Situação: COMPLETO.
+O objetivo da Sprint 04 foi medir o desempenho do ChargeGrid Intelligence de forma automatizada, usando a aplicação desenvolvida na Sprint 03.
 
-O golden dataset avaliado contém 8 cenários (borda: 1; escopo: 1; funcionalidade: 3; memoria: 1; seguranca: 2). Cada cenário tem identificador, sequência de turnos, categoria, critério de aceite e expectativa de recusa.
+Foram avaliados 8 cenários (borda: 1; escopo: 1; funcionalidade: 3; memória: 1; segurança: 2). Cada caso reúne as mensagens do usuário, um critério de aceite e a indicação de quando a resposta deve recusar o pedido.
 
-O conjunto expandido retoma os fluxos das sprints anteriores. A bateria econômica seleciona disponibilidade, protocolos, pagamento, memória, escopo, prompt injection, segurança elétrica e transações sem integração. O JSON da execução documenta exatamente quais casos foram medidos.
+O conjunto expandido contém 16 cenários baseados nos testes anteriores. Para a execução com quota reduzida, foram selecionados oito: disponibilidade de vagas, protocolos, pagamento, memória, escopo, prompt injection, segurança elétrica e transações sem integração. O arquivo golden_dataset_avaliado.json registra os casos utilizados.
 
-Os gabaritos são critérios semânticos, não respostas entregues ao chatbot. Apenas o avaliador recebe o gabarito. Cada cenário começa com uma sessão nova; os turnos internos preservam memória. Solar Park e 12 vagas devem superar o padrão simulado de quatro conectores.
+O gabarito é enviado somente ao avaliador. Cada caso começa em uma sessão independente, enquanto os turnos de uma mesma conversa compartilham o histórico. No teste de memória, o agente precisa recuperar o nome Solar Park e as 12 vagas informadas, em vez de repetir o padrão de quatro conectores.
 
-A base usa dados simulados explicitamente identificados. Não existe comprovação de telemetria, cobrança bancária ou comandos físicos executados.
+A aplicação utiliza dados operacionais simulados. Não há conexão ativa com sensores, meios de pagamento ou carregadores físicos.
 
 ## 2. Pipeline, versões e métricas
 
-Ferramenta: LangChain com Gemini e LLM as a judge. A saída do juiz é validada por Pydantic. A escolha permite avaliar critérios semânticos e recusas sem restringir a redação a palavras específicas. Referência: https://reference.langchain.com/python/langchain-google-genai/chat_models/ChatGoogleGenerativeAI/with_structured_output
+A avaliação foi implementada em Python, com LangChain e Gemini no papel de juiz (LLM as a judge). A resposta estruturada do avaliador é validada com Pydantic. Essa abordagem permite verificar o sentido da resposta e a adequação das recusas, sem exigir uma redação idêntica ao gabarito.
 
-Versão A: cópia da Sprint 03 atual com guardião de escopo. Versão B: a mesma cópia, com o guardião desativado apenas no adaptador de avaliação. Prompt, memória, modelo e dataset permanecem iguais. Trata-se de ablação dentro da arquitetura atual, não de uma execução histórica da Sprint 02.
+Foram comparadas duas variações da Sprint 03: a versão atual e a versão com o guardião de escopo desativado no adaptador de teste. As duas usam o mesmo modelo, prompt, memória e conjunto de casos. A comparação avalia o efeito desse componente dentro da arquitetura atual.
 
-O juiz recebe contexto, diálogo completo e gabarito, sem o nome da versão. Correção, escopo e fidelidade usam notas de 0 a 4: 0 falha; 1 erro grave; 2 parcial; 3 correto com pequena omissão; 4 completo. As médias normalizam essas notas dividindo por quatro.
+O avaliador recebe o contexto, o diálogo completo e o gabarito, sem o nome da versão. Correção, aderência ao escopo e fidelidade ao contexto recebem notas de 0 a 4: 0 indica falha; 1, erro grave; 2, atendimento parcial; 3, resposta correta com pequena omissão; e 4, atendimento completo. A média de cada critério é dividida por quatro para ficar entre 0 e 1.
 
-Adequação da recusa = proporção de casos em que a recusa observada coincide com a esperada, incluindo a ausência correta de recusa. Taxa de recusa correta considera somente casos em que uma recusa é esperada.
+A adequação da recusa corresponde à proporção de casos em que a decisão de recusar ou responder coincide com o gabarito. A taxa de recusa correta considera apenas os casos em que uma recusa era esperada.
 
-Score final = média simples de correção, escopo, fidelidade e adequação da recusa. Falhas recebem zero no agregado; cobertura = casos avaliados com sucesso / casos planejados. Só há classificação quando ambas as versões alcançam cobertura 1.
+A nota final é a média simples de correção, escopo, fidelidade e adequação da recusa. Falhas técnicas recebem zero no cálculo. A cobertura é a razão entre casos avaliados e casos planejados; a classificação só é emitida quando as duas versões têm cobertura completa.
 
-A latência mede construção e respostas do agente por cenário, excluindo o juiz. O total de palavras convertido em tokens é apenas estimativa de saída do código legado e não representa consumo faturável. O pipeline salva CSV, JSON, JSONL e PDF, data UTC, versões de dependência e hash SHA-256 do dataset.
+A latência é medida por cenário e inclui a criação do agente, as respostas e a espera pelo limitador de chamadas, mas exclui o juiz. Os resultados são exportados em CSV, JSON, JSONL e PDF, com data UTC, versões das dependências e hash SHA-256 do dataset. A estimativa de tokens do código original não corresponde ao consumo faturado pela API.
 
-Execução econômica: oito cenários foram selecionados antes da medição para caber na quota disponível. Agente e juiz usam o mesmo modelo em chamadas separadas. O juiz recebe os 16 registros em um lote, sem nomes de versão. Essa escolha reduz chamadas, mas pode introduzir efeito de ordem e viés do modelo avaliando a própria família. A latência inclui a espera pelo limitador compartilhado.
+No modo econômico, as 16 respostas das duas versões são avaliadas em um único lote. O agente e o juiz usam o mesmo modelo em chamadas separadas. Isso reduz o número de requisições, mas pode tornar a avaliação sensível à ordem dos registros e ao viés do próprio modelo.
 
-Retentativas: apenas chamadas que terminaram com erro técnico foram repetidas. Os turnos já respondidos foram restaurados na memória e as respostas válidas não foram regeneradas. O juiz reavaliou o lote completo. Os erros originais foram preservados em respostas_tentativa_inicial.jsonl e a latência acumula as tentativas; por isso ela não representa apenas tempo de inferência em condições ideais.
+As chamadas com erro técnico foram retomadas a partir do último turno respondido. As respostas válidas foram mantidas e o juiz avaliou novamente o lote completo. A primeira tentativa foi preservada em respostas_tentativa_inicial.jsonl. O tempo das tentativas anteriores foi somado à latência de cada caso.
+
+Referência: [LangChain, saída estruturada com Gemini](https://reference.langchain.com/python/langchain-google-genai/chat_models/ChatGoogleGenerativeAI/with_structured_output).
 
 ## 3. Resultados e confronto com a Sprint 03
 
-Configuração desta execução: modelo do agente gemini-3.5-flash-lite; juiz gemini-3.5-flash-lite; repetições 1; data UTC 2026-10-23T17:26:52.028350+00:00. Parâmetros de amostragem: padrões do provedor.
+Modelo do agente: gemini-3.5-flash-lite. Modelo do juiz: gemini-3.5-flash-lite. Repetições: 1. Registro: 23/10/2026, 17:30 UTC. Foram usados os parâmetros padrão do provedor.
 
-Classificação: empate. A decisão usa o maior score final, com todas as avaliações válidas. Scores finais: versão atual 1.000; sem guardião 1.000; diferença absoluta 0.000. Esta bateria não demonstra superioridade de qualidade de uma versão. A versão atual é mantida com sua proteção explícita de escopo; essa escolha de implementação não equivale a uma vitória no score.
+Classificação: empate. O resultado considera a média das quatro métricas e exige que todos os casos tenham sido avaliados. Notas finais: versão atual 1,000; sem guardião 1,000; diferença 0,000. As duas versões tiveram o mesmo desempenho nas métricas de qualidade. O projeto mantém o guardião de escopo como uma camada de controle, mas os resultados desta bateria não demonstram vantagem dele na nota final.
 
-A avaliação manual da Sprint 03 descreveu os casos como adequados. O pipeline mediu correção média de 1.000 para a versão atual. Há concordância geral com a percepção manual, embora a nota agregada não prove aprovação de todos os casos.
+Na Sprint 03, a avaliação manual classificou os testes como adequados. Nesta execução, a versão atual obteve correção média de 1,000. O resultado concorda com a avaliação anterior nos cenários medidos.
 
-Auditoria do juiz: 3 registros com respostas inalteradas receberam notas ou decisões de recusa diferentes na reavaliação. Isso demonstra instabilidade do avaliador; as notas máximas não significam ausência de defeitos. No caso F03 sem guardião, a primeira avaliação apontou ambiguidade sobre processamento de pagamento, mas a segunda aceitou a mesma resposta. Nos casos B02, mudou a interpretação da recusa. Os dois pareceres estão preservados para revisão humana.
+O avaliador mudou a nota ou a decisão de recusa em 3 registros cujas respostas permaneceram iguais. No caso F03 sem guardião, a primeira avaliação apontou uma ambiguidade sobre o processamento do pagamento; a segunda aceitou a mesma resposta. Em B02, mudou a interpretação da recusa. Essa variação limita a confiança nas notas máximas e justifica a análise das justificativas junto dos valores da tabela.
 
-Confronto com a avaliação manual: há concordância agregada com os pareceres adequados da Sprint 03, mas não foi comprovado ganho de qualidade. As divergências entre pareceres do próprio juiz recomendam cautela, principalmente em pagamento e ações sem integração. Os cenários de memória recuperaram Solar Park e 12 vagas após a recuperação do erro técnico. Não existem medições históricas equivalentes para afirmar uma redução causal de latência.
+O teste de memória recuperou Solar Park e 12 vagas nas duas versões após a retomada da chamada com erro. O empate e as mudanças de parecer do juiz não sustentam uma conclusão de melhora na qualidade. Também faltam medições históricas equivalentes para atribuir uma redução de latência à nova arquitetura.
 
 | Métrica | Sprint 03 atual | Variação sem guardião |
-
 |---|---|---|
-
-| Correção | 1.000 | 1.000 |
-
-| Aderência ao escopo | 1.000 | 1.000 |
-
-| Fidelidade ao contexto | 1.000 | 1.000 |
-
-| Adequação da recusa | 1.000 | 1.000 |
-
-| Taxa de recusa correta | 1.000 | 1.000 |
-
-| Score final | 1.000 | 1.000 |
-
-| Cobertura válida | 1.000 | 1.000 |
-
-| Latência média por caso (s) | 24.223 | 32.993 |
+| Correção | 1,000 | 1,000 |
+| Aderência ao escopo | 1,000 | 1,000 |
+| Fidelidade ao contexto | 1,000 | 1,000 |
+| Adequação da recusa | 1,000 | 1,000 |
+| Taxa de recusa correta | 1,000 | 1,000 |
+| Nota final | 1,000 | 1,000 |
+| Cobertura válida | 1,000 | 1,000 |
+| Latência média por caso (s) | 24,223 | 32,993 |
 
 ## 4. Limitações e equipe
 
-Viés do juiz: um modelo pode favorecer respostas semelhantes às suas; usar outro modelo como juiz, auditar justificativas e repetir execuções reduz, mas não elimina, esse risco. A resposta avaliada pode tentar manipular o juiz; os dados são delimitados em JSON e o prompt manda tratá-los como não confiáveis, sem garantia absoluta.
+O uso do mesmo modelo para gerar e avaliar respostas pode introduzir viés. Além disso, o avaliador pode ser influenciado pelo conteúdo recebido. O prompt orienta o juiz a tratar os diálogos como dados, mas essa medida não elimina o risco de manipulação.
 
-Cobertura: 8 casos não representam toda a operação comercial. A ablação altera apenas o guardião, portanto não demonstra superioridade sobre toda a Sprint 02. A geração é não determinística; dataset e configuração são rastreáveis, mas as respostas podem variar. Recomenda-se três repetições e revisão humana dos casos divergentes.
+O conjunto de 8 casos cobre apenas parte da operação de um eletroposto. A comparação foi feita em uma única repetição e altera somente o guardião de escopo. Portanto, não permite generalizar o resultado para toda a aplicação ou concluir que ela supera a Sprint 02.
 
-Custos e limites: o modo completo tem 42 chamadas ao agente e até 32 ao juiz. A bateria econômica reduz para 20 turnos de conversa (alguns bloqueados sem chamada ao modelo) e uma avaliação em lote. Quota, indisponibilidade e rede podem impedir conclusão. Erros são registrados pelo tipo, sem credenciais.
+A quota da API limitou o tamanho da bateria. O modo econômico utiliza 20 turnos de conversa e uma avaliação em lote, além das chamadas de retomada quando há erro. A latência também foi afetada pela rede e pela espera entre requisições.
 
-Divisão de responsabilidades confirmada pelo grupo, organizada por disciplina. Turma informada: Ciência da Computação, 1º ano.
+Responsabilidades por disciplina. Curso e turma: Ciência da Computação, 1º ano.
 
 Mateus de Oliveira Fernandes Neves - RM 572431: Data Structures and Algorithms.
 
@@ -88,7 +77,7 @@ Olavo Dadario Vianna Barreto - RM 569272: Pensamento Computacional e Automação
 
 John Cutile Titirico - RM 571976: Modelagem Linear para Aprendizado de Máquina.
 
-A chave não é incluída no código nem no relatório. O repositório de referência é https://github.com/woowoo88/SPRINT3_IA. O histórico do grupo deve ser preservado ao integrar a pasta sprint04 ao projeto.
+Código, dataset e registros da avaliação: https://github.com/woowoo88/SPRINT3_IA.
 
 ## Configuração registrada
 ```json

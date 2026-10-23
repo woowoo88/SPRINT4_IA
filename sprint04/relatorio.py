@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -10,6 +11,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 
+REFERENCIA = 'https://reference.langchain.com/python/langchain-google-genai/chat_models/ChatGoogleGenerativeAI/with_structured_output'
 
 def gerar(resultado=None, destino=Path('resultados')):
     destino.mkdir(parents=True, exist_ok=True)
@@ -17,13 +19,14 @@ def gerar(resultado=None, destino=Path('resultados')):
     dataset = json.loads(dataset_path.read_text(encoding='utf-8'))
     from collections import Counter
     categorias = Counter(c['categoria'] for c in dataset)
-    distribuicao = '; '.join(f'{k}: {v}' for k,v in sorted(categorias.items()))
+    rotulos = {'memoria':'memória', 'seguranca':'segurança'}
+    distribuicao = '; '.join(f'{rotulos.get(k,k)}: {v}' for k,v in sorted(categorias.items()))
     estado = 'PENDENTE DE EXECUÇÃO REAL' if resultado is None else resultado['status'].upper()
     nomes = ['sprint03_atual', 'variacao_sem_guardiao']
     metricas = [
         ('correcao', 'Correção'), ('escopo', 'Aderência ao escopo'),
         ('fidelidade', 'Fidelidade ao contexto'), ('adequacao_recusa', 'Adequação da recusa'),
-        ('taxa_recusa_correta', 'Taxa de recusa correta'), ('score_final', 'Score final'),
+        ('taxa_recusa_correta', 'Taxa de recusa correta'), ('score_final', 'Nota final'),
         ('cobertura', 'Cobertura válida'), ('latencia_media_s', 'Latência média por caso (s)'),
     ]
     tabela = [['Métrica', 'Sprint 03 atual', 'Variação sem guardião']]
@@ -31,80 +34,85 @@ def gerar(resultado=None, destino=Path('resultados')):
         linha = [rotulo]
         for nome in nomes:
             valor = resultado['resumo'][nome][chave] if resultado else None
-            linha.append('Não medido' if valor is None else f'{valor:.3f}')
+            linha.append('Não medido' if valor is None else f'{valor:.3f}'.replace('.', ','))
         tabela.append(linha)
     if resultado and resultado['classificacao']:
-        classificacao = f"Classificação: {resultado['classificacao']}. A decisão usa o maior score final, com todas as avaliações válidas."
+        classificacao = f"Classificação: {resultado['classificacao']}. O resultado considera a média das quatro métricas e exige que todos os casos tenham sido avaliados."
         a, b = (resultado['resumo'][nome]['score_final'] for nome in nomes)
-        classificacao += f' Scores finais: versão atual {a:.3f}; sem guardião {b:.3f}; diferença absoluta {abs(a-b):.3f}.'
+        valores = [f'{v:.3f}'.replace('.', ',') for v in (a,b,abs(a-b))]
+        classificacao += f' Notas finais: versão atual {valores[0]}; sem guardião {valores[1]}; diferença {valores[2]}.'
         if resultado['classificacao']=='empate':
-            classificacao += ' Esta bateria não demonstra superioridade de qualidade de uma versão. A versão atual é mantida com sua proteção explícita de escopo; essa escolha de implementação não equivale a uma vitória no score.'
+            classificacao += ' As duas versões tiveram o mesmo desempenho nas métricas de qualidade. O projeto mantém o guardião de escopo como uma camada de controle, mas os resultados desta bateria não demonstram vantagem dele na nota final.'
     else:
         classificacao = 'Classificação inconclusiva. Não há duas execuções completas que sustentem a escolha de uma versão vencedora.'
     if resultado and resultado['status'] == 'completo':
         c = resultado['resumo']['sprint03_atual']['correcao']
         confronto = (
-            f'A avaliação manual da Sprint 03 descreveu os casos como adequados. O pipeline mediu correção média '
-            f'de {c:.3f} para a versão atual. ' +
-            ('Há concordância geral com a percepção manual, embora a nota agregada não prove aprovação de todos os casos.'
-             if c >= .75 else 'Há divergência em relação à avaliação manual otimista; revisar as justificativas por caso para localizar as falhas.')
+            'Na Sprint 03, a avaliação manual classificou os testes como adequados. Nesta execução, '
+            'a versão atual obteve correção média de ' + f'{c:.3f}'.replace('.', ',') + '. ' +
+            ('O resultado concorda com a avaliação anterior nos cenários medidos.'
+             if c >= .75 else 'O resultado diverge da avaliação anterior e exige análise das justificativas por caso.')
         )
     else:
         confronto = 'O registro manual anterior classifica os casos como adequados, mas não contém logs completos, tempos ou notas numéricas. Ainda não é possível confirmar concordância com o pipeline. Não foram atribuídas notas retrospectivas à Sprint 03.'
     secoes = [
         ('1. Objetivo e golden dataset', [
-            f'Esta entrega avalia o ChargeGrid Intelligence mantendo o núcleo da Sprint 03. Situação: {estado}.',
-            f'O golden dataset avaliado contém {len(dataset)} cenários ({distribuicao}). Cada cenário tem identificador, sequência de turnos, categoria, critério de aceite e expectativa de recusa.',
-            'O conjunto expandido retoma os fluxos das sprints anteriores. A bateria econômica seleciona disponibilidade, protocolos, pagamento, memória, escopo, prompt injection, segurança elétrica e transações sem integração. O JSON da execução documenta exatamente quais casos foram medidos.',
-            'Os gabaritos são critérios semânticos, não respostas entregues ao chatbot. Apenas o avaliador recebe o gabarito. Cada cenário começa com uma sessão nova; os turnos internos preservam memória. Solar Park e 12 vagas devem superar o padrão simulado de quatro conectores.',
-            'A base usa dados simulados explicitamente identificados. Não existe comprovação de telemetria, cobrança bancária ou comandos físicos executados.'
+            'O objetivo da Sprint 04 foi medir o desempenho do ChargeGrid Intelligence de forma automatizada, usando a aplicação desenvolvida na Sprint 03.',
+            f'Foram avaliados {len(dataset)} cenários ({distribuicao}). Cada caso reúne as mensagens do usuário, um critério de aceite e a indicação de quando a resposta deve recusar o pedido.',
+            'O conjunto expandido contém 16 cenários baseados nos testes anteriores. Para a execução com quota reduzida, foram selecionados oito: disponibilidade de vagas, protocolos, pagamento, memória, escopo, prompt injection, segurança elétrica e transações sem integração. O arquivo golden_dataset_avaliado.json registra os casos utilizados.',
+            'O gabarito é enviado somente ao avaliador. Cada caso começa em uma sessão independente, enquanto os turnos de uma mesma conversa compartilham o histórico. No teste de memória, o agente precisa recuperar o nome Solar Park e as 12 vagas informadas, em vez de repetir o padrão de quatro conectores.',
+            'A aplicação utiliza dados operacionais simulados. Não há conexão ativa com sensores, meios de pagamento ou carregadores físicos.'
         ]),
         ('2. Pipeline, versões e métricas', [
-            'Ferramenta: LangChain com Gemini e LLM as a judge. A saída do juiz é validada por Pydantic. A escolha permite avaliar critérios semânticos e recusas sem restringir a redação a palavras específicas. Referência: https://reference.langchain.com/python/langchain-google-genai/chat_models/ChatGoogleGenerativeAI/with_structured_output',
-            'Versão A: cópia da Sprint 03 atual com guardião de escopo. Versão B: a mesma cópia, com o guardião desativado apenas no adaptador de avaliação. Prompt, memória, modelo e dataset permanecem iguais. Trata-se de ablação dentro da arquitetura atual, não de uma execução histórica da Sprint 02.',
-            'O juiz recebe contexto, diálogo completo e gabarito, sem o nome da versão. Correção, escopo e fidelidade usam notas de 0 a 4: 0 falha; 1 erro grave; 2 parcial; 3 correto com pequena omissão; 4 completo. As médias normalizam essas notas dividindo por quatro.',
-            'Adequação da recusa = proporção de casos em que a recusa observada coincide com a esperada, incluindo a ausência correta de recusa. Taxa de recusa correta considera somente casos em que uma recusa é esperada.',
-            'Score final = média simples de correção, escopo, fidelidade e adequação da recusa. Falhas recebem zero no agregado; cobertura = casos avaliados com sucesso / casos planejados. Só há classificação quando ambas as versões alcançam cobertura 1.',
-            'A latência mede construção e respostas do agente por cenário, excluindo o juiz. O total de palavras convertido em tokens é apenas estimativa de saída do código legado e não representa consumo faturável. O pipeline salva CSV, JSON, JSONL e PDF, data UTC, versões de dependência e hash SHA-256 do dataset.'
+            'A avaliação foi implementada em Python, com LangChain e Gemini no papel de juiz (LLM as a judge). A resposta estruturada do avaliador é validada com Pydantic. Essa abordagem permite verificar o sentido da resposta e a adequação das recusas, sem exigir uma redação idêntica ao gabarito.',
+            'Foram comparadas duas variações da Sprint 03: a versão atual e a versão com o guardião de escopo desativado no adaptador de teste. As duas usam o mesmo modelo, prompt, memória e conjunto de casos. A comparação avalia o efeito desse componente dentro da arquitetura atual.',
+            'O avaliador recebe o contexto, o diálogo completo e o gabarito, sem o nome da versão. Correção, aderência ao escopo e fidelidade ao contexto recebem notas de 0 a 4: 0 indica falha; 1, erro grave; 2, atendimento parcial; 3, resposta correta com pequena omissão; e 4, atendimento completo. A média de cada critério é dividida por quatro para ficar entre 0 e 1.',
+            'A adequação da recusa corresponde à proporção de casos em que a decisão de recusar ou responder coincide com o gabarito. A taxa de recusa correta considera apenas os casos em que uma recusa era esperada.',
+            'A nota final é a média simples de correção, escopo, fidelidade e adequação da recusa. Falhas técnicas recebem zero no cálculo. A cobertura é a razão entre casos avaliados e casos planejados; a classificação só é emitida quando as duas versões têm cobertura completa.',
+            'A latência é medida por cenário e inclui a criação do agente, as respostas e a espera pelo limitador de chamadas, mas exclui o juiz. Os resultados são exportados em CSV, JSON, JSONL e PDF, com data UTC, versões das dependências e hash SHA-256 do dataset. A estimativa de tokens do código original não corresponde ao consumo faturado pela API.'
         ]),
         ('3. Resultados e confronto com a Sprint 03', [classificacao, confronto]),
         ('4. Limitações e equipe', [
-            'Viés do juiz: um modelo pode favorecer respostas semelhantes às suas; usar outro modelo como juiz, auditar justificativas e repetir execuções reduz, mas não elimina, esse risco. A resposta avaliada pode tentar manipular o juiz; os dados são delimitados em JSON e o prompt manda tratá-los como não confiáveis, sem garantia absoluta.',
-            f'Cobertura: {len(dataset)} casos não representam toda a operação comercial. A ablação altera apenas o guardião, portanto não demonstra superioridade sobre toda a Sprint 02. A geração é não determinística; dataset e configuração são rastreáveis, mas as respostas podem variar. Recomenda-se três repetições e revisão humana dos casos divergentes.',
-            'Custos e limites: o modo completo tem 42 chamadas ao agente e até 32 ao juiz. A bateria econômica reduz para 20 turnos de conversa (alguns bloqueados sem chamada ao modelo) e uma avaliação em lote. Quota, indisponibilidade e rede podem impedir conclusão. Erros são registrados pelo tipo, sem credenciais.',
-            'Divisão de responsabilidades confirmada pelo grupo, organizada por disciplina. Turma informada: Ciência da Computação, 1º ano.',
+            'O uso do mesmo modelo para gerar e avaliar respostas pode introduzir viés. Além disso, o avaliador pode ser influenciado pelo conteúdo recebido. O prompt orienta o juiz a tratar os diálogos como dados, mas essa medida não elimina o risco de manipulação.',
+            f'O conjunto de {len(dataset)} casos cobre apenas parte da operação de um eletroposto. A comparação foi feita em uma única repetição e altera somente o guardião de escopo. Portanto, não permite generalizar o resultado para toda a aplicação ou concluir que ela supera a Sprint 02.',
+            'A quota da API limitou o tamanho da bateria. O modo econômico utiliza 20 turnos de conversa e uma avaliação em lote, além das chamadas de retomada quando há erro. A latência também foi afetada pela rede e pela espera entre requisições.',
+            'Responsabilidades por disciplina. Curso e turma: Ciência da Computação, 1º ano.',
             'Mateus de Oliveira Fernandes Neves - RM 572431: Data Structures and Algorithms.',
             'Angela Sousa Takezawa - RM 570797: Prompt and Artificial Intelligence.',
             'Pedro Soares de Souza - RM 571285: Modelagem Matemática e Computacional.',
             'Paulo Henrique Lira Bilac de Araújo - RM 569496: Computer Organization and Architecture / Computer Science.',
             'Olavo Dadario Vianna Barreto - RM 569272: Pensamento Computacional e Automação com Python / Soluções em Energias Renováveis e Sustentáveis.',
             'John Cutile Titirico - RM 571976: Modelagem Linear para Aprendizado de Máquina.',
-            'A chave não é incluída no código nem no relatório. O repositório de referência é https://github.com/woowoo88/SPRINT3_IA. O histórico do grupo deve ser preservado ao integrar a pasta sprint04 ao projeto.'
+            'Código, dataset e registros da avaliação: https://github.com/woowoo88/SPRINT3_IA.'
         ])
     ]
     if resultado:
-        secoes[2][1].insert(0, 'Configuração desta execução: modelo do agente ' + resultado['modelo_agente'] +
-                           '; juiz ' + resultado['modelo_juiz'] + '; repetições ' + str(resultado['repeticoes']) +
-                           '; data UTC ' + resultado['executado_em_utc'] + '. Parâmetros de amostragem: padrões do provedor.')
+        registro = datetime.fromisoformat(resultado.get('retomada_em_utc',resultado['executado_em_utc'])).strftime('%d/%m/%Y, %H:%M UTC')
+        secoes[2][1].insert(0, 'Modelo do agente: ' + resultado['modelo_agente'] +
+                           '. Modelo do juiz: ' + resultado['modelo_juiz'] + '. Repetições: ' + str(resultado['repeticoes']) +
+                           '. Registro: ' + registro + '. Foram usados os parâmetros padrão do provedor.')
         if resultado.get('juiz_em_lote'):
-            secoes[1][1].append('Execução econômica: oito cenários foram selecionados antes da medição para caber na quota disponível. Agente e juiz usam o mesmo modelo em chamadas separadas. O juiz recebe os 16 registros em um lote, sem nomes de versão. Essa escolha reduz chamadas, mas pode introduzir efeito de ordem e viés do modelo avaliando a própria família. A latência inclui a espera pelo limitador compartilhado.')
+            secoes[1][1].append('No modo econômico, as 16 respostas das duas versões são avaliadas em um único lote. O agente e o juiz usam o mesmo modelo em chamadas separadas. Isso reduz o número de requisições, mas pode tornar a avaliação sensível à ordem dos registros e ao viés do próprio modelo.')
         if resultado.get('retomada_em_utc'):
-            secoes[1][1].append('Retentativas: apenas chamadas que terminaram com erro técnico foram repetidas. Os turnos já respondidos foram restaurados na memória e as respostas válidas não foram regeneradas. O juiz reavaliou o lote completo. Os erros originais foram preservados em respostas_tentativa_inicial.jsonl e a latência acumula as tentativas; por isso ela não representa apenas tempo de inferência em condições ideais.')
+            secoes[1][1].append('As chamadas com erro técnico foram retomadas a partir do último turno respondido. As respostas válidas foram mantidas e o juiz avaliou novamente o lote completo. A primeira tentativa foi preservada em respostas_tentativa_inicial.jsonl. O tempo das tentativas anteriores foi somado à latência de cada caso.')
         backup=destino/'respostas_tentativa_inicial.jsonl'
         if backup.exists():
             antigos={(r['id'],r['versao']):r for r in map(json.loads,backup.read_text(encoding='utf-8').splitlines())}
             atuais=list(map(json.loads,(destino/'respostas.jsonl').read_text(encoding='utf-8').splitlines()))
             alterados=[r for r in atuais if antigos[(r['id'],r['versao'])]['status']=='ok' and
                        any(antigos[(r['id'],r['versao'])]['juiz'][k]!=r['juiz'][k] for k in ('correcao','escopo','fidelidade','recusou'))]
-            secoes[2][1].append(f'Auditoria do juiz: {len(alterados)} registros com respostas inalteradas receberam notas ou decisões de recusa diferentes na reavaliação. Isso demonstra instabilidade do avaliador; as notas máximas não significam ausência de defeitos. No caso F03 sem guardião, a primeira avaliação apontou ambiguidade sobre processamento de pagamento, mas a segunda aceitou a mesma resposta. Nos casos B02, mudou a interpretação da recusa. Os dois pareceres estão preservados para revisão humana.')
-            secoes[2][1].append('Confronto com a avaliação manual: há concordância agregada com os pareceres adequados da Sprint 03, mas não foi comprovado ganho de qualidade. As divergências entre pareceres do próprio juiz recomendam cautela, principalmente em pagamento e ações sem integração. Os cenários de memória recuperaram Solar Park e 12 vagas após a recuperação do erro técnico. Não existem medições históricas equivalentes para afirmar uma redução causal de latência.')
-    md = ['# Relatório final - ChargeGrid Intelligence - Sprint 04', f'\nEstado: {estado}\n']
+            secoes[2][1].append(f'O avaliador mudou a nota ou a decisão de recusa em {len(alterados)} registros cujas respostas permaneceram iguais. No caso F03 sem guardião, a primeira avaliação apontou uma ambiguidade sobre o processamento do pagamento; a segunda aceitou a mesma resposta. Em B02, mudou a interpretação da recusa. Essa variação limita a confiança nas notas máximas e justifica a análise das justificativas junto dos valores da tabela.')
+            secoes[2][1].append('O teste de memória recuperou Solar Park e 12 vagas nas duas versões após a retomada da chamada com erro. O empate e as mudanças de parecer do juiz não sustentam uma conclusão de melhora na qualidade. Também faltam medições históricas equivalentes para atribuir uma redução de latência à nova arquitetura.')
+    md = ['# Relatório final - ChargeGrid Intelligence - Sprint 04']
     for titulo, paragrafos in secoes:
         md.append('## ' + titulo)
         md.extend(paragrafos)
+        if titulo.startswith('2.'):
+            md.append(f'Referência: [LangChain, saída estruturada com Gemini]({REFERENCIA}).')
         if titulo.startswith('3.'):
-            md.extend(['| ' + ' | '.join(tabela[0]) + ' |', '|---|---|---|'])
-            md.extend('| ' + ' | '.join(row) + ' |' for row in tabela[1:])
+            linhas_tabela = ['| ' + ' | '.join(tabela[0]) + ' |', '|---|---|---|']
+            linhas_tabela.extend('| ' + ' | '.join(row) + ' |' for row in tabela[1:])
+            md.append('\n'.join(linhas_tabela))
     if resultado:
         md.append('## Configuração registrada\n```json\n' + json.dumps(resultado, ensure_ascii=False, indent=2) + '\n```')
     (destino / 'relatorio_final.md').write_text('\n\n'.join(md), encoding='utf-8')
@@ -119,6 +127,8 @@ def gerar(resultado=None, destino=Path('resultados')):
                       Paragraph(escape(titulo), styles['Heading1'])])
         for paragrafo in paragrafos:
             story.extend([Paragraph(escape(paragrafo), styles['BodyText']), Spacer(1, 9)])
+        if i == 1:
+            story.append(Paragraph(f'Referência: <link href="{REFERENCIA}" color="#155e75">LangChain, saída estruturada com Gemini</link>.', styles['BodyText']))
         if i == 2:
             cells = [[Paragraph(escape(c), styles['BodyText']) for c in row] for row in tabela]
             table = Table(cells, colWidths=[7*cm, 4.3*cm, 4.3*cm], repeatRows=1)
