@@ -14,6 +14,24 @@ O projeto usa:
 
 O ChargeGrid Intelligence apoia a operação comercial de eletropostos. O agente responde perguntas sobre vagas, conectores, sessões de recarga, demanda, pagamento, tarifa dinâmica, OCPP, MODBUS e relatórios operacionais.
 
+## Sprint 04 - Avaliação automatizada
+
+O pipeline executa 16 cenários contra duas variações do agente (atual e sem guardião de escopo) e utiliza Gemini como juiz para medir correção, escopo, fidelidade e adequação das recusas.
+
+[Abrir a avaliação no Google Colab](https://colab.research.google.com/github/woowoo88/SPRINT3_IA/blob/main/Executar_Sprint04.ipynb)
+
+Execute as células do notebook em ordem. Ele clona este repositório, instala as dependências da avaliação, lê a chave de forma oculta e solicita os IDs dos modelos disponíveis na sua conta. Ao terminar, permite baixar os resultados e o relatório PDF com as notas.
+
+Para executar localmente, configure `GOOGLE_API_KEY` no ambiente ou em `.env` e use:
+
+```bash
+pip install -r requirements-sprint04.txt
+python -m sprint04.avaliar --modelo SEU_MODELO --juiz MODELO_JUIZ
+python -m unittest sprint04.test_pipeline -v
+```
+
+Veja a [documentação da Sprint 04](sprint04/README.md). O relatório em `sprint04/relatorio_metodologico/` está marcado como pendente: os testes locais validaram a infraestrutura, mas não substituem a execução real com Gemini. Os resultados reais são gerados em `resultados/`, em uma pasta por execução.
+
 ## Agentes da aplicação
 
 A aplicação possui dois agentes:
