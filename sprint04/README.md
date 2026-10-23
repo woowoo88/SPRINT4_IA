@@ -4,6 +4,14 @@ Esta sprint acrescenta avaliação sistemática ao código existente. O agente c
 
 ## Execução
 
+Para contas com quota reduzida, o modo econômico usa oito cenários e um juiz em lote, mantendo as cinco categorias do conjunto expandido:
+
+```bash
+python -m sprint04.avaliar_economico --modelo gemini-3.5-flash-lite --saida resultados/economico
+```
+
+O mesmo modelo é utilizado em ambas as versões e em uma chamada separada de avaliação. Esse modo usa até 18 chamadas ao modelo por bateria. Ele não contorna limites diários: se a quota do projeto acabar, é preciso aguardar a renovação ou ajustar o plano no provedor. O controle de ritmo do modo completo limita as chamadas a oito por minuto por padrão.
+
 Abra o notebook [Executar_Sprint04.ipynb no Colab](https://colab.research.google.com/github/woowoo88/SPRINT3_IA/blob/main/Executar_Sprint04.ipynb) e execute as células em ordem. A chave é lida por Colab Secrets ou entrada oculta. Informe IDs de modelo disponíveis em sua conta; nenhum modelo é substituído silenciosamente.
 
 Localmente, com Python 3.10 ou superior e chave configurada em `GOOGLE_API_KEY` ou `.env`:
@@ -30,8 +38,18 @@ Falhas contam como zero no agregado e reduzem a cobertura. Não há vencedor enq
 
 ## Evidências e pendências
 
-Os cinco testes de infraestrutura foram aprovados, conforme `VALIDACAO_LOCAL.md`. Os dublês são exclusivos dos testes e não fornecem notas reais do agente. Não havia chave Gemini neste ambiente, portanto o relatório em `relatorio_metodologico/` está marcado como pendente de execução real.
+Os oito testes de infraestrutura foram aprovados. Os dublês são exclusivos dos testes e não fornecem notas reais do agente. A avaliação real está concluída em `resultados_reais/execucao_economica/`: oito cenários por versão, Gemini 3.5 Flash-Lite, cobertura final de 100% e empate no score (1,000). Consulte o PDF, os diálogos e as justificativas; o relatório registra a instabilidade do juiz e as retentativas técnicas. O documento em `relatorio_metodologico/` é uma versão histórica anterior à execução.
 
-`avaliacao_manual_sprint03.md` preserva o registro qualitativo anterior para confronto, sem tratá-lo como comprovação quantitativa. `proveniencia.json` identifica a base copiada. Após a execução real, revise as justificativas do juiz e entregue o PDF consolidado junto do link deste repositório e do arquivo de identificação dos integrantes. Confirme nome completo do Jhon, código da turma e divisão efetiva das tarefas desta sprint.
+`avaliacao_manual_sprint03.md` preserva o registro qualitativo anterior para confronto, sem tratá-lo como comprovação quantitativa. `proveniencia.json` identifica a base. O relatório final inclui John Cutile Titirico (RM 571976) e a divisão por matérias confirmada pelo grupo. A turma foi informada como Ciência da Computação, 1º ano. A chave não integra o código ou os arquivos de entrega.
+
+Para retomar apenas turnos com falha técnica, com a chave configurada no ambiente:
+
+```python
+from pathlib import Path
+from sprint04.retomar_falhas import retomar
+retomar(Path('resultados/sua_execucao'))
+```
+
+O procedimento preserva a tentativa inicial, restaura os turnos anteriores e não regenera respostas válidas. Depois, reavalia todo o lote. O histórico das tentativas reais está em `resultados_reais/HISTORICO_EXECUCOES.md`.
 
 Referência técnica: [saída estruturada Gemini no LangChain](https://reference.langchain.com/python/langchain-google-genai/chat_models/ChatGoogleGenerativeAI/with_structured_output).

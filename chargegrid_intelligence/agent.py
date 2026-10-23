@@ -30,7 +30,7 @@ class ChargeGridAgent:
         os.environ["GOOGLE_API_KEY"] = api_key
         os.environ.pop("GEMINI_API_KEY", None)
 
-        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+        self.model_name = model_name or os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
         self.scope_guard = ScopeGuardAgent()
         self._facts_by_session: dict[str, dict[str, str]] = {}
         self._history_by_session: dict[str, InMemoryChatMessageHistory] = {}

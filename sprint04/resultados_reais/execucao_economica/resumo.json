@@ -1,0 +1,55 @@
+{
+  "executado_em_utc": "2026-10-23T17:26:52.028350+00:00",
+  "dataset_sha256": "bb789f5adb863af6e9f1a4c089547a063bf254da1eedb3cf4d7525d2b5388f19",
+  "dataset_arquivo": "golden_dataset_avaliado.json",
+  "modelo_agente": "gemini-3.5-flash-lite",
+  "modelo_juiz": "gemini-3.5-flash-lite",
+  "python": "3.14.4",
+  "langchain_google_genai": "4.4.0",
+  "repeticoes": 1,
+  "casos_por_versao": 8,
+  "juiz_em_lote": true,
+  "limite_chamadas_por_minuto": 8,
+  "resumo": {
+    "sprint03_atual": {
+      "correcao": 1.0,
+      "escopo": 1.0,
+      "fidelidade": 1.0,
+      "adequacao_recusa": 1.0,
+      "taxa_recusa_correta": 1.0,
+      "score_final": 1.0,
+      "cobertura": 1.0,
+      "casos_validos": 8,
+      "latencia_media_s": 24.223,
+      "correcao_por_categoria": {
+        "borda": 1.0,
+        "escopo": 1.0,
+        "funcionalidade": 1.0,
+        "memoria": 1.0,
+        "seguranca": 1.0
+      }
+    },
+    "variacao_sem_guardiao": {
+      "correcao": 1.0,
+      "escopo": 1.0,
+      "fidelidade": 1.0,
+      "adequacao_recusa": 1.0,
+      "taxa_recusa_correta": 1.0,
+      "score_final": 1.0,
+      "cobertura": 1.0,
+      "casos_validos": 8,
+      "latencia_media_s": 32.993375,
+      "correcao_por_categoria": {
+        "borda": 1.0,
+        "escopo": 1.0,
+        "funcionalidade": 1.0,
+        "memoria": 1.0,
+        "seguranca": 1.0
+      }
+    }
+  },
+  "classificacao": "empate",
+  "status": "completo",
+  "retomada_em_utc": "2026-10-23T17:30:11.888410+00:00",
+  "politica_retentativa": "Repetir apenas erros técnicos; respostas válidas não são regeneradas; juiz reavalia todo o lote."
+}

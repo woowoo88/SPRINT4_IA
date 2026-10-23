@@ -30,7 +30,7 @@ python -m sprint04.avaliar --modelo SEU_MODELO --juiz MODELO_JUIZ
 python -m unittest sprint04.test_pipeline -v
 ```
 
-Veja a [documentação da Sprint 04](sprint04/README.md). O relatório em `sprint04/relatorio_metodologico/` está marcado como pendente: os testes locais validaram a infraestrutura, mas não substituem a execução real com Gemini. Os resultados reais são gerados em `resultados/`, em uma pasta por execução.
+Veja a [documentação da Sprint 04](sprint04/README.md). A [avaliação real concluída](sprint04/resultados_reais/execucao_economica/relatorio_final.md) utilizou Gemini 3.5 Flash-Lite em oito cenários por versão, com cobertura final de 100% e empate no score (1,000 em ambas). O relatório documenta retentativas de falhas técnicas e instabilidade do juiz; as notas não significam ausência de defeitos. Os registros e as notas estão em `sprint04/resultados_reais/execucao_economica/`. Novas execuções são geradas em `resultados/`, em uma pasta por execução.
 
 ## Agentes da aplicação
 
@@ -66,7 +66,7 @@ from getpass import getpass
 
 os.environ.pop("GEMINI_API_KEY", None)
 os.environ["GOOGLE_API_KEY"] = getpass("Cole sua chave Gemini: ")
-os.environ["GEMINI_MODEL"] = "gemini-3.6-flash"
+os.environ["GEMINI_MODEL"] = "gemini-3.5-flash-lite"
 ```
 
 ### 3. Executar o agente em modo conversa contínua
@@ -110,7 +110,7 @@ Crie um arquivo `.env` baseado em `.env.example`:
 
 ```env
 GOOGLE_API_KEY=sua-chave-aqui
-GEMINI_MODEL=gemini-3.6-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 Instale e rode:

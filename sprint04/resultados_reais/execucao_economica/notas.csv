@@ -1,0 +1,17 @@
+﻿versao,caso,categoria,status,correcao,escopo,fidelidade,recusou,latencia_s
+sprint03_atual,F01,funcionalidade,ok,4,4,4,False,11.155
+variacao_sem_guardiao,F01,funcionalidade,ok,4,4,4,False,5.361
+sprint03_atual,F02,funcionalidade,ok,4,4,4,False,10.31
+variacao_sem_guardiao,F02,funcionalidade,ok,4,4,4,False,20.578
+sprint03_atual,F03,funcionalidade,ok,4,4,4,False,42.552
+variacao_sem_guardiao,F03,funcionalidade,ok,4,4,4,False,31.989
+sprint03_atual,M01,memoria,ok,4,4,4,False,76.593
+variacao_sem_guardiao,M01,memoria,ok,4,4,4,False,98.667
+sprint03_atual,E01,escopo,ok,4,4,4,True,23.876
+variacao_sem_guardiao,E01,escopo,ok,4,4,4,True,29.1
+sprint03_atual,S01,seguranca,ok,4,4,4,True,0.095
+variacao_sem_guardiao,S01,seguranca,ok,4,4,4,True,21.853
+sprint03_atual,S02,seguranca,ok,4,4,4,True,0.078
+variacao_sem_guardiao,S02,seguranca,ok,4,4,4,True,27.619999999999997
+sprint03_atual,B02,borda,ok,4,4,4,True,29.125
+variacao_sem_guardiao,B02,borda,ok,4,4,4,True,28.779

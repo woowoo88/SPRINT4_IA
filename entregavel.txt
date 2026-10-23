@@ -4,22 +4,24 @@ https://github.com/woowoo88/SPRINT3_IA
 Projeto:
 ChargeGrid Intelligence
 
-Entrega Sprint 03:
-O projeto contém uma aplicação funcional de agentes de IA para gerenciamento
-comercial de recarga veicular. A solução utiliza LangChain, Google Gemini,
-memória por sessão, agente principal de conversa e agente guardião de escopo.
+Entrega Sprint 04:
+O projeto contém um pipeline funcional de avaliação do ChargeGrid Intelligence,
+com golden dataset, comparação entre versões, juiz Gemini, métricas automáticas
+e relatório consolidado com resultados de chamadas reais.
 
-Pasta dos documentos de entrega:
-entregaveis/
+Relatório final:
+sprint04/resultados_reais/execucao_economica/relatorio_final.pdf
 
-Arquivos incluídos:
-- README_ENTREGA.md
-- guia_execucao.md
-- relatorio_modelos.md
-- casos_de_teste.md
-- relatorio_evolucao.md
-- relatorio_evolucao.pdf
-- identificacao_integrantes.txt
+Identificação dos integrantes:
+entregaveis/identificacao_integrantes.txt
+
+Golden dataset avaliado e evidências:
+sprint04/resultados_reais/execucao_economica/
+
+Execução no Google Colab:
+Executar_Sprint04.ipynb
+
+Os documentos da Sprint 03 foram preservados na pasta entregaveis/.
 
 Observação:
 Nenhuma chave de API foi publicada no código-fonte. A chave do Gemini deve ser

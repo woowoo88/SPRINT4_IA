@@ -14,6 +14,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.rate_limiters import InMemoryRateLimiter
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel, Field
 
@@ -96,7 +97,7 @@ def agregar(linhas, total):
     return saida
 
 
-def executar(modelo, juiz_modelo, destino, repeticoes=1):
+def executar(modelo, juiz_modelo, destino, repeticoes=1, chamadas_por_minuto=8):
     load_dotenv()
     key = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY')
     if not key:
@@ -105,8 +106,13 @@ def executar(modelo, juiz_modelo, destino, repeticoes=1):
     os.environ.pop('GEMINI_API_KEY', None)
     casos, digest = carregar_dataset()
     destino.mkdir(parents=True, exist_ok=True)
+    if chamadas_por_minuto <= 0:
+        raise ValueError('O limite de chamadas por minuto deve ser positivo.')
+    limiter = InMemoryRateLimiter(requests_per_second=chamadas_por_minuto / 60,
+                                  check_every_n_seconds=.1, max_bucket_size=1)
     juiz = ChatGoogleGenerativeAI(model=juiz_modelo, google_api_key=key,
-                                 max_retries=2, timeout=60).with_structured_output(Julgamento)
+                                 max_retries=2, timeout=60,
+                                 rate_limiter=limiter).with_structured_output(Julgamento)
     linhas = []
     for repeticao in range(repeticoes):
         for caso in casos:
@@ -121,7 +127,8 @@ def executar(modelo, juiz_modelo, destino, repeticoes=1):
                     agente = ChargeGridAgent(model_name=modelo)
                     # O cliente real continua sendo Gemini nas duas variações.
                     agente._llm = ChatGoogleGenerativeAI(model=modelo, google_api_key=key,
-                                                       max_retries=2, timeout=60)
+                                                       max_retries=2, timeout=60,
+                                                       rate_limiter=limiter)
                     if nome == 'variacao_sem_guardiao':
                         agente.scope_guard = SemGuardiao()
                     tokens_estimados = 0
@@ -154,6 +161,7 @@ def executar(modelo, juiz_modelo, destino, repeticoes=1):
                  'dataset_sha256': digest, 'modelo_agente': modelo, 'modelo_juiz': juiz_modelo,
                  'python': platform.python_version(), 'langchain_google_genai': version('langchain-google-genai'),
                  'repeticoes': repeticoes, 'casos_por_versao': len(casos) * repeticoes,
+                 'limite_chamadas_por_minuto': chamadas_por_minuto,
                  'resumo': resumo, 'classificacao': melhor,
                  'status': 'completo' if completo else 'incompleto'}
     (destino / 'resumo.json').write_text(json.dumps(resultado, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -174,11 +182,12 @@ def main():
     parser.add_argument('--juiz', required=True, help='Modelo Gemini do avaliador')
     parser.add_argument('--repeticoes', type=int, default=1)
     parser.add_argument('--saida', type=Path, default=Path('resultados'))
+    parser.add_argument('--chamadas-por-minuto', type=float, default=8)
     args = parser.parse_args()
     if args.repeticoes < 1:
         parser.error('Use ao menos uma repetição.')
     destino = args.saida / datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-    resultado = executar(args.modelo, args.juiz, destino, args.repeticoes)
+    resultado = executar(args.modelo, args.juiz, destino, args.repeticoes, args.chamadas_por_minuto)
     print(f'Relatório salvo em {destino.resolve()}')
     if resultado['status'] != 'completo':
         raise SystemExit('Execução incompleta: consulte erro_tipo no respostas.jsonl; sem vencedor.')

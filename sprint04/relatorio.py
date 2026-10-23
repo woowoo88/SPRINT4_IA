@@ -13,7 +13,11 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 
 def gerar(resultado=None, destino=Path('resultados')):
     destino.mkdir(parents=True, exist_ok=True)
-    dataset = json.loads(Path(__file__).with_name('golden_dataset.json').read_text(encoding='utf-8'))
+    dataset_path = destino/resultado['dataset_arquivo'] if resultado and resultado.get('dataset_arquivo') else Path(__file__).with_name('golden_dataset.json')
+    dataset = json.loads(dataset_path.read_text(encoding='utf-8'))
+    from collections import Counter
+    categorias = Counter(c['categoria'] for c in dataset)
+    distribuicao = '; '.join(f'{k}: {v}' for k,v in sorted(categorias.items()))
     estado = 'PENDENTE DE EXECUÇÃO REAL' if resultado is None else resultado['status'].upper()
     nomes = ['sprint03_atual', 'variacao_sem_guardiao']
     metricas = [
@@ -33,6 +37,8 @@ def gerar(resultado=None, destino=Path('resultados')):
         classificacao = f"Classificação: {resultado['classificacao']}. A decisão usa o maior score final, com todas as avaliações válidas."
         a, b = (resultado['resumo'][nome]['score_final'] for nome in nomes)
         classificacao += f' Scores finais: versão atual {a:.3f}; sem guardião {b:.3f}; diferença absoluta {abs(a-b):.3f}.'
+        if resultado['classificacao']=='empate':
+            classificacao += ' Esta bateria não demonstra superioridade de qualidade de uma versão. A versão atual é mantida com sua proteção explícita de escopo; essa escolha de implementação não equivale a uma vitória no score.'
     else:
         classificacao = 'Classificação inconclusiva. Não há duas execuções completas que sustentem a escolha de uma versão vencedora.'
     if resultado and resultado['status'] == 'completo':
@@ -48,8 +54,8 @@ def gerar(resultado=None, destino=Path('resultados')):
     secoes = [
         ('1. Objetivo e golden dataset', [
             f'Esta entrega avalia o ChargeGrid Intelligence mantendo o núcleo da Sprint 03. Situação: {estado}.',
-            f'O golden dataset contém {len(dataset)} cenários: cinco funcionais, dois de memória, dois de escopo, cinco de segurança e dois de borda. Cada cenário tem identificador, sequência de turnos, categoria, critério de aceite e expectativa de recusa.',
-            'Os fluxos funcionais retomam disponibilidade, protocolos, pagamento, relatório e demanda das sprints anteriores. Foram adicionados cálculos, memória, mudança de assunto, instruções maliciosas e pedidos transacionais sem integração.',
+            f'O golden dataset avaliado contém {len(dataset)} cenários ({distribuicao}). Cada cenário tem identificador, sequência de turnos, categoria, critério de aceite e expectativa de recusa.',
+            'O conjunto expandido retoma os fluxos das sprints anteriores. A bateria econômica seleciona disponibilidade, protocolos, pagamento, memória, escopo, prompt injection, segurança elétrica e transações sem integração. O JSON da execução documenta exatamente quais casos foram medidos.',
             'Os gabaritos são critérios semânticos, não respostas entregues ao chatbot. Apenas o avaliador recebe o gabarito. Cada cenário começa com uma sessão nova; os turnos internos preservam memória. Solar Park e 12 vagas devem superar o padrão simulado de quatro conectores.',
             'A base usa dados simulados explicitamente identificados. Não existe comprovação de telemetria, cobrança bancária ou comandos físicos executados.'
         ]),
@@ -64,10 +70,15 @@ def gerar(resultado=None, destino=Path('resultados')):
         ('3. Resultados e confronto com a Sprint 03', [classificacao, confronto]),
         ('4. Limitações e equipe', [
             'Viés do juiz: um modelo pode favorecer respostas semelhantes às suas; usar outro modelo como juiz, auditar justificativas e repetir execuções reduz, mas não elimina, esse risco. A resposta avaliada pode tentar manipular o juiz; os dados são delimitados em JSON e o prompt manda tratá-los como não confiáveis, sem garantia absoluta.',
-            'Cobertura: 16 casos não representam toda a operação comercial. A ablação altera apenas o guardião, portanto não demonstra superioridade sobre toda a Sprint 02. A geração é não determinística; dataset e configuração são rastreáveis, mas as respostas podem variar. Recomenda-se três repetições e revisão humana dos casos divergentes.',
-            'Custos e limites: uma execução envolve 42 chamadas ao agente e até 32 ao juiz, com repetições adicionais multiplicando esses valores. Alguns casos bloqueados não chegam ao modelo. Quota, indisponibilidade e rede podem impedir conclusão. Erros são registrados pelo tipo, sem credenciais.',
-            'O material anterior informa nomes, RMs e matérias por integrante, mas não comprova divisão individual das tarefas da Sprint 04. Para preservar a integridade, as atribuições abaixo permanecem a confirmar pelo grupo.',
-            'Mateus de Oliveira Fernandes Neves - RM 572431; Angela Sousa Takezawa - RM 570797; Pedro Soares de Souza - RM 571285; Paulo Henrique Lira Bilac de Araújo - RM 569496; Olavo Dadario Vianna Barreto - RM 569272; Jhon - RM 571976. Nome completo do Jhon, código da turma e tarefas efetivamente realizadas na Sprint 04 devem ser confirmados.',
+            f'Cobertura: {len(dataset)} casos não representam toda a operação comercial. A ablação altera apenas o guardião, portanto não demonstra superioridade sobre toda a Sprint 02. A geração é não determinística; dataset e configuração são rastreáveis, mas as respostas podem variar. Recomenda-se três repetições e revisão humana dos casos divergentes.',
+            'Custos e limites: o modo completo tem 42 chamadas ao agente e até 32 ao juiz. A bateria econômica reduz para 20 turnos de conversa (alguns bloqueados sem chamada ao modelo) e uma avaliação em lote. Quota, indisponibilidade e rede podem impedir conclusão. Erros são registrados pelo tipo, sem credenciais.',
+            'Divisão de responsabilidades confirmada pelo grupo, organizada por disciplina. Turma informada: Ciência da Computação, 1º ano.',
+            'Mateus de Oliveira Fernandes Neves - RM 572431: Data Structures and Algorithms.',
+            'Angela Sousa Takezawa - RM 570797: Prompt and Artificial Intelligence.',
+            'Pedro Soares de Souza - RM 571285: Modelagem Matemática e Computacional.',
+            'Paulo Henrique Lira Bilac de Araújo - RM 569496: Computer Organization and Architecture / Computer Science.',
+            'Olavo Dadario Vianna Barreto - RM 569272: Pensamento Computacional e Automação com Python / Soluções em Energias Renováveis e Sustentáveis.',
+            'John Cutile Titirico - RM 571976: Modelagem Linear para Aprendizado de Máquina.',
             'A chave não é incluída no código nem no relatório. O repositório de referência é https://github.com/woowoo88/SPRINT3_IA. O histórico do grupo deve ser preservado ao integrar a pasta sprint04 ao projeto.'
         ])
     ]
@@ -75,6 +86,18 @@ def gerar(resultado=None, destino=Path('resultados')):
         secoes[2][1].insert(0, 'Configuração desta execução: modelo do agente ' + resultado['modelo_agente'] +
                            '; juiz ' + resultado['modelo_juiz'] + '; repetições ' + str(resultado['repeticoes']) +
                            '; data UTC ' + resultado['executado_em_utc'] + '. Parâmetros de amostragem: padrões do provedor.')
+        if resultado.get('juiz_em_lote'):
+            secoes[1][1].append('Execução econômica: oito cenários foram selecionados antes da medição para caber na quota disponível. Agente e juiz usam o mesmo modelo em chamadas separadas. O juiz recebe os 16 registros em um lote, sem nomes de versão. Essa escolha reduz chamadas, mas pode introduzir efeito de ordem e viés do modelo avaliando a própria família. A latência inclui a espera pelo limitador compartilhado.')
+        if resultado.get('retomada_em_utc'):
+            secoes[1][1].append('Retentativas: apenas chamadas que terminaram com erro técnico foram repetidas. Os turnos já respondidos foram restaurados na memória e as respostas válidas não foram regeneradas. O juiz reavaliou o lote completo. Os erros originais foram preservados em respostas_tentativa_inicial.jsonl e a latência acumula as tentativas; por isso ela não representa apenas tempo de inferência em condições ideais.')
+        backup=destino/'respostas_tentativa_inicial.jsonl'
+        if backup.exists():
+            antigos={(r['id'],r['versao']):r for r in map(json.loads,backup.read_text(encoding='utf-8').splitlines())}
+            atuais=list(map(json.loads,(destino/'respostas.jsonl').read_text(encoding='utf-8').splitlines()))
+            alterados=[r for r in atuais if antigos[(r['id'],r['versao'])]['status']=='ok' and
+                       any(antigos[(r['id'],r['versao'])]['juiz'][k]!=r['juiz'][k] for k in ('correcao','escopo','fidelidade','recusou'))]
+            secoes[2][1].append(f'Auditoria do juiz: {len(alterados)} registros com respostas inalteradas receberam notas ou decisões de recusa diferentes na reavaliação. Isso demonstra instabilidade do avaliador; as notas máximas não significam ausência de defeitos. No caso F03 sem guardião, a primeira avaliação apontou ambiguidade sobre processamento de pagamento, mas a segunda aceitou a mesma resposta. Nos casos B02, mudou a interpretação da recusa. Os dois pareceres estão preservados para revisão humana.')
+            secoes[2][1].append('Confronto com a avaliação manual: há concordância agregada com os pareceres adequados da Sprint 03, mas não foi comprovado ganho de qualidade. As divergências entre pareceres do próprio juiz recomendam cautela, principalmente em pagamento e ações sem integração. Os cenários de memória recuperaram Solar Park e 12 vagas após a recuperação do erro técnico. Não existem medições históricas equivalentes para afirmar uma redução causal de latência.')
     md = ['# Relatório final - ChargeGrid Intelligence - Sprint 04', f'\nEstado: {estado}\n']
     for titulo, paragrafos in secoes:
         md.append('## ' + titulo)

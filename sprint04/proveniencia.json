@@ -3,6 +3,8 @@
   "commit_base": "a0297529c8902c9032b1a0143fa4204bca86d07e",
   "comparacao": "Duas variações da cópia local: guardião original e ablação sem guardião",
   "avaliacao_manual": "Registro qualitativo anterior; não contém evidências brutas completas",
-  "execucao_gemini_neste_ambiente": false,
-  "motivo": "Credencial de API indisponível; executar o notebook no Colab"
+  "execucao_gemini_neste_ambiente": true,
+  "modelo_avaliado": "gemini-3.5-flash-lite",
+  "resultados": "sprint04/resultados_reais/execucao_economica/",
+  "observacao": "Bateria econômica de oito casos por versão; falhas técnicas retomadas com preservação da tentativa inicial"
 }
