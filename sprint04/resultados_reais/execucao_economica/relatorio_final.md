@@ -55,7 +55,7 @@ O teste de memória recuperou Solar Park e 12 vagas nas duas versões após a re
 | Cobertura válida | 1,000 | 1,000 |
 | Latência média por caso (s) | 24,223 | 32,993 |
 
-## 4. Limitações e equipe
+## 4. Limitações
 
 O uso do mesmo modelo para gerar e avaliar respostas pode introduzir viés. Além disso, o avaliador pode ser influenciado pelo conteúdo recebido. O prompt orienta o juiz a tratar os diálogos como dados, mas essa medida não elimina o risco de manipulação.
 
@@ -63,7 +63,9 @@ O conjunto de 8 casos cobre apenas parte da operação de um eletroposto. A comp
 
 A quota da API limitou o tamanho da bateria. O modo econômico utiliza 20 turnos de conversa e uma avaliação em lote, além das chamadas de retomada quando há erro. A latência também foi afetada pela rede e pela espera entre requisições.
 
-Responsabilidades por disciplina. Curso e turma: Ciência da Computação, 1º ano.
+## 5. Divisão de responsabilidades da equipe
+
+Curso e turma: Ciência da Computação, 1º ano. Responsabilidades organizadas por disciplina.
 
 Mateus de Oliveira Fernandes Neves - RM 572431: Data Structures and Algorithms.
 

@@ -21,7 +21,7 @@ def gerar(resultado=None, destino=Path('resultados')):
     categorias = Counter(c['categoria'] for c in dataset)
     rotulos = {'memoria':'memória', 'seguranca':'segurança'}
     distribuicao = '; '.join(f'{rotulos.get(k,k)}: {v}' for k,v in sorted(categorias.items()))
-    estado = 'PENDENTE DE EXECUÇÃO REAL' if resultado is None else resultado['status'].upper()
+    titulo_equipe = '5. Divisão de responsabilidades da equipe'
     nomes = ['sprint03_atual', 'variacao_sem_guardiao']
     metricas = [
         ('correcao', 'Correção'), ('escopo', 'Aderência ao escopo'),
@@ -72,11 +72,12 @@ def gerar(resultado=None, destino=Path('resultados')):
             'A latência é medida por cenário e inclui a criação do agente, as respostas e a espera pelo limitador de chamadas, mas exclui o juiz. Os resultados são exportados em CSV, JSON, JSONL e PDF, com data UTC, versões das dependências e hash SHA-256 do dataset. A estimativa de tokens do código original não corresponde ao consumo faturado pela API.'
         ]),
         ('3. Resultados e confronto com a Sprint 03', [classificacao, confronto]),
-        ('4. Limitações e equipe', [
+        ('4. Limitações', [
             'O uso do mesmo modelo para gerar e avaliar respostas pode introduzir viés. Além disso, o avaliador pode ser influenciado pelo conteúdo recebido. O prompt orienta o juiz a tratar os diálogos como dados, mas essa medida não elimina o risco de manipulação.',
             f'O conjunto de {len(dataset)} casos cobre apenas parte da operação de um eletroposto. A comparação foi feita em uma única repetição e altera somente o guardião de escopo. Portanto, não permite generalizar o resultado para toda a aplicação ou concluir que ela supera a Sprint 02.',
             'A quota da API limitou o tamanho da bateria. O modo econômico utiliza 20 turnos de conversa e uma avaliação em lote, além das chamadas de retomada quando há erro. A latência também foi afetada pela rede e pela espera entre requisições.',
-            'Responsabilidades por disciplina. Curso e turma: Ciência da Computação, 1º ano.',
+            titulo_equipe,
+            'Curso e turma: Ciência da Computação, 1º ano. Responsabilidades organizadas por disciplina.',
             'Mateus de Oliveira Fernandes Neves - RM 572431: Data Structures and Algorithms.',
             'Angela Sousa Takezawa - RM 570797: Prompt and Artificial Intelligence.',
             'Pedro Soares de Souza - RM 571285: Modelagem Matemática e Computacional.',
@@ -106,7 +107,7 @@ def gerar(resultado=None, destino=Path('resultados')):
     md = ['# Relatório final - ChargeGrid Intelligence - Sprint 04']
     for titulo, paragrafos in secoes:
         md.append('## ' + titulo)
-        md.extend(paragrafos)
+        md.extend('## ' + texto if texto == titulo_equipe else texto for texto in paragrafos)
         if titulo.startswith('2.'):
             md.append(f'Referência: [LangChain, saída estruturada com Gemini]({REFERENCIA}).')
         if titulo.startswith('3.'):
@@ -126,7 +127,8 @@ def gerar(resultado=None, destino=Path('resultados')):
         story.extend([Paragraph('ChargeGrid Intelligence | Sprint 04', styles['Title']),
                       Paragraph(escape(titulo), styles['Heading1'])])
         for paragrafo in paragrafos:
-            story.extend([Paragraph(escape(paragrafo), styles['BodyText']), Spacer(1, 9)])
+            estilo = styles['Heading2'] if paragrafo == titulo_equipe else styles['BodyText']
+            story.extend([Paragraph(escape(paragrafo), estilo), Spacer(1, 9)])
         if i == 1:
             story.append(Paragraph(f'Referência: <link href="{REFERENCIA}" color="#155e75">LangChain, saída estruturada com Gemini</link>.', styles['BodyText']))
         if i == 2:
@@ -140,7 +142,6 @@ def gerar(resultado=None, destino=Path('resultados')):
             story.append(table)
     def rodape(canvas, doc):
         canvas.setFont('Helvetica', 8)
-        canvas.drawString(1.7*cm, 1*cm, f'ChargeGrid - {estado}')
         canvas.drawRightString(A4[0]-1.7*cm, 1*cm, str(doc.page))
     SimpleDocTemplate(str(destino/'relatorio_final.pdf'), pagesize=A4,
                       leftMargin=1.7*cm, rightMargin=1.7*cm, topMargin=1.5*cm,
